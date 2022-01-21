@@ -67,7 +67,7 @@ export default function sortableContainer(
     static defaultProps = defaultProps;
     static propTypes = propTypes;
 
-    componentDidUpdate() {
+    updateContainer = () => {
       const {useWindowAsScrollContainer} = this.props;
       const container = this.getContainer();
 
@@ -103,6 +103,16 @@ export default function sortableContainer(
 
         this.container.addEventListener('keydown', this.handleKeyDown);
       });
+    };
+
+    componentDidMount() {
+      this.updateContainer();
+    }
+
+    componentDidUpdate(prevProps) {
+      if (prevProps.updateContainer !== this.props.updateContainer) {
+        this.updateContainer();
+      }
     }
 
     componentWillUnmount() {

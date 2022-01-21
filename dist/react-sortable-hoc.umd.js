@@ -1170,6 +1170,7 @@
     updateBeforeSortStart: PropTypes.func,
     useDragHandle: PropTypes.bool,
     useWindowAsScrollContainer: PropTypes.bool,
+    updateContainer: PropTypes.bool,
   };
   var defaultKeyCodes = {
     lift: [KEYCODE.SPACE],
@@ -1308,6 +1309,52 @@
           _this = _super.call(this, props);
 
           _defineProperty(_assertThisInitialized(_this), 'state', {});
+
+          _defineProperty(
+            _assertThisInitialized(_this),
+            'updateContainer',
+            function() {
+              var useWindowAsScrollContainer =
+                _this.props.useWindowAsScrollContainer;
+
+              var container = _this.getContainer();
+
+              Promise.resolve(container).then(function(containerNode) {
+                _this.container = containerNode;
+                _this.document = _this.container.ownerDocument || document;
+                var contentWindow =
+                  _this.props.contentWindow ||
+                  _this.document.defaultView ||
+                  window;
+                _this.contentWindow =
+                  typeof contentWindow === 'function'
+                    ? contentWindow()
+                    : contentWindow;
+                _this.scrollContainer = useWindowAsScrollContainer
+                  ? _this.document.scrollingElement ||
+                    _this.document.documentElement
+                  : getScrollingParent(_this.container) || _this.container;
+                _this.autoScroller = new AutoScroller(
+                  _this.scrollContainer,
+                  _this.onAutoScroll,
+                );
+                Object.keys(_this.events).forEach(function(key) {
+                  return events[key].forEach(function(eventName) {
+                    return _this.container.addEventListener(
+                      eventName,
+                      _this.events[key],
+                      false,
+                    );
+                  });
+                });
+
+                _this.container.addEventListener(
+                  'keydown',
+                  _this.handleKeyDown,
+                );
+              });
+            },
+          );
 
           _defineProperty(
             _assertThisInitialized(_this),
@@ -2104,53 +2151,23 @@
 
         _createClass(WithSortableContainer, [
           {
+            key: 'componentDidMount',
+            value: function componentDidMount() {
+              this.updateContainer();
+            },
+          },
+          {
             key: 'componentDidUpdate',
-            value: function componentDidUpdate() {
-              var _this2 = this;
-
-              var useWindowAsScrollContainer = this.props
-                .useWindowAsScrollContainer;
-              var container = this.getContainer();
-              Promise.resolve(container).then(function(containerNode) {
-                _this2.container = containerNode;
-                _this2.document = _this2.container.ownerDocument || document;
-                var contentWindow =
-                  _this2.props.contentWindow ||
-                  _this2.document.defaultView ||
-                  window;
-                _this2.contentWindow =
-                  typeof contentWindow === 'function'
-                    ? contentWindow()
-                    : contentWindow;
-                _this2.scrollContainer = useWindowAsScrollContainer
-                  ? _this2.document.scrollingElement ||
-                    _this2.document.documentElement
-                  : getScrollingParent(_this2.container) || _this2.container;
-                _this2.autoScroller = new AutoScroller(
-                  _this2.scrollContainer,
-                  _this2.onAutoScroll,
-                );
-                Object.keys(_this2.events).forEach(function(key) {
-                  return events[key].forEach(function(eventName) {
-                    return _this2.container.addEventListener(
-                      eventName,
-                      _this2.events[key],
-                      false,
-                    );
-                  });
-                });
-
-                _this2.container.addEventListener(
-                  'keydown',
-                  _this2.handleKeyDown,
-                );
-              });
+            value: function componentDidUpdate(prevProps) {
+              if (prevProps.updateContainer !== this.props.updateContainer) {
+                this.updateContainer();
+              }
             },
           },
           {
             key: 'componentWillUnmount',
             value: function componentWillUnmount() {
-              var _this3 = this;
+              var _this2 = this;
 
               if (this.helper && this.helper.parentNode) {
                 this.helper.parentNode.removeChild(this.helper);
@@ -2162,9 +2179,9 @@
 
               Object.keys(this.events).forEach(function(key) {
                 return events[key].forEach(function(eventName) {
-                  return _this3.container.removeEventListener(
+                  return _this2.container.removeEventListener(
                     eventName,
-                    _this3.events[key],
+                    _this2.events[key],
                   );
                 });
               });

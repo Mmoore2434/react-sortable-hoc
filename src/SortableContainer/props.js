@@ -48,6 +48,7 @@ export const propTypes = {
   updateBeforeSortStart: PropTypes.func,
   useDragHandle: PropTypes.bool,
   useWindowAsScrollContainer: PropTypes.bool,
+  updateContainer: PropTypes.bool,
 };
 
 export const defaultKeyCodes = {
